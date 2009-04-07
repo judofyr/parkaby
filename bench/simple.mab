@@ -1,0 +1,9 @@
+html {
+  head {
+    title "happy title"
+  }
+  body {
+    h1 "happy heading"
+    a "a link", "href" => "url"
+  }
+}

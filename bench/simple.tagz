@@ -1,0 +1,9 @@
+html_ {
+  head_ {
+    title_ "happy title"
+  }
+  body_ {
+    h1_ "happy heading"
+    a_ "a link", :href => "url"
+  }
+}

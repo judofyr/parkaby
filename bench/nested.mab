@@ -1,0 +1,18 @@
+div(:id => "posts") do
+  100.times do
+    div(:class => "post") do
+      div(:class => "header") do
+        h2 { a "Hello!", :href => '/' }
+      end
+      
+      div(:class => "info") do
+        p "Written blah, blah"
+      end
+      
+      div(:class => "content") do
+        self << "Awesome!"
+      end
+    end
+  end
+end
+      

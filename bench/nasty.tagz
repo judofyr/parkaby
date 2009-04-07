@@ -1,0 +1,53 @@
+__ '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+html_(:xmlns=>'http://www.w3.org/1999/xhtml', 'xml:lang'=>'en-US') do
+  head_ do
+    title_ "Hampton Catlin Is Totally Awesome"
+    meta_("http-equiv" => "Content-Type", :content => "text/html; charset=utf-8") {}
+  end
+  body_ do
+    # You're In my house now!
+    div_ :class => "header" do
+      __ %|Yes, ladies and gentileman. He is just that egotistical.
+      Fantastic! This should be multi-line output
+      The question is if this would translate! Ahah!|
+      __ 1 + 9 + 8 + 2 #numbers should work and this should be ignored
+    end
+    div_(:id => "body") { __ "Quotes should be loved! Just like people!"}
+    120.times do |number|
+      a_ number, :href => "#id-#{number}"
+    end
+    __ "Wow.|"
+    p_ do
+      __ "Holy cow        " + 
+        "multiline       " +       
+        "tags!           " + 
+        "A pipe (|) even!"   
+      __ [1, 2, 3].collect { |n| "PipesIgnored|" }
+      __ [1, 2, 3].collect { |n|     
+          n.to_s                    
+        }.join("|")                
+    end
+    div_(:class => "silent") do
+      foo = String.new
+      foo << "this"
+      foo << " shouldn't"
+      foo << " evaluate"
+      __ foo + " but now it should!\n"
+      # Woah crap a comment!
+    end
+    # That was a line that shouldn't close everything.
+    ul_(:class => "really cool") do
+      ('a'..'f').each do |a|
+        li_ a
+      end
+    end
+    div_((@should_eval = "with this text"), :id => "combo", :class => "of_divs_with_underscore")
+    [ 104, 101, 108, 108, 111 ].map do |byte|
+      byte.chr
+    end
+    div_(:class => "footer") do
+      div_ "See, and this contains a tag: <strong>escape me!</strong>"
+      strong_("This is a really long ruby quote. It should be loved and wrapped because its more than 50 characters. This value may change in the future and this test may look stupid. \nSo, I'm just making it *really* long. God, I hope this works", :class => "shout")
+    end
+  end
+end

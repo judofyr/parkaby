@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+require File.join(File.dirname(__FILE__), '..', 'lib', 'parkaby')
+require 'optparse'
+
+ARGV << '-h' if ARGV.empty?
+compile = false
+
+parser = OptionParser.new do |opts|
+  opts.on('-x', 'Compile only') {
+    compile = true
+  }
+  
+  opts.on('-h', '--help') {
+    puts "Usage: parkaby file.mab    > file.html"
+    puts "       parkaby -x file.mab > file.rb"
+    exit
+  }
+end
+
+begin
+  files = parser.parse(ARGV)
+rescue OptionParser::InvalidOption
+  puts "ERR: #{$!}" 
+  exit
+end
+       
+file = File.read(files.first)
+comp = Parkaby::Template.string(file)
+
+if compile
+  print(comp.to_ruby)
+else
+  print(comp.compile.render)
+end

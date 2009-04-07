@@ -1,0 +1,296 @@
+= Parkaby, ParseTree meets Markaby
+
+    In the beginning God created ERB. And ERB was waste and void;
+    and darkness was upon the face of the deep: and the Spirit of
+    God moved upon the face of the templates. And God said, Let
+    there be Ruby: and there was Markaby.
+    
+                                ~~ Genesis 1:1-3, The Template Engine Bible
+
+Ruby is nice. I think that's something we all can agree on. When you suddenly
+need to output some HTML in the middle of your app, it's very convenient to
+continue writing Ruby, instead of switching to String and interpolation.
+That's where Markaby comes in:
+
+  mab {
+    html {
+      head {
+        title "happy title"
+      }
+      body {
+        h1 "happy heading"
+        a "a link", "href" => "url"
+      }
+    }
+  }
+  
+Of course, we all know that Ruby is slow. Needless to say, that makes Markaby
+slow too. Not even Tagz, Ryan Davis' fast Markaby-clone, can't stand a chance
+against Erubis and Haml. It's time we fight back. Let's show them that pure,
+readable Ruby can get on par with percent signs and forced indentations:
+
+  Parkaby {
+    html {
+      head {
+        title "happy title"
+      }
+      body {
+        h1 "happy heading"
+        a "a link", "href" => "url"
+      }
+    }
+  }
+  
+See, no changes at all, but take a look at the benchmark:
+
+  ~> ruby bench/run.rb simple 10000
+  
+                             user     system      total        real
+  Erubis                 0.030000   0.000000   0.030000 (  0.022264)
+  Haml                   0.110000   0.000000   0.110000 (  0.117887)
+  Parkaby (def_method)   0.130000   0.000000   0.130000 (  0.135996)
+  Parkaby (render)       0.150000   0.010000   0.160000 (  0.150680)
+  Parkaby (inline)       0.970000   0.000000   0.970000 (  0.988010)
+  Tagz                   3.250000   0.040000   3.290000 (  3.400699)
+  Markaby               12.610000   0.140000  12.750000 ( 13.067794)
+      
+Okay, with all respect: this is a really crappy benchmark. Luckily, the Haml
+guys have written a very nasty template:
+
+  ~> ruby bench/run.rb nasty 500
+  
+                             user     system      total        real
+  Erubis                 0.190000   0.010000   0.200000 (  0.198487)
+  Parkaby (def_method)   0.350000   0.000000   0.350000 (  0.363106)
+  Parkaby (render)       0.360000   0.010000   0.370000 (  0.365007)
+  Parkaby (inline)       0.570000   0.000000   0.570000 (  0.614286)
+  Haml                   2.490000   0.030000   2.520000 (  2.620025)
+  Tagz                   5.100000   0.060000   5.160000 (  5.394778)
+  Markaby                7.220000   0.090000   7.310000 (  7.630588)
+     
+That's more like it!
+
+It's still not a truly fair comparision though. Both Parkaby, Tagz and Markaby
+escapes all input, while in Erubis and Haml you'll need to explicitly mark it
+where needed. In the nasty template, nearly nothing needs to be escaped, so
+Parkaby, Tagz and Markaby are doing a lot of escaping for nothing!
+
+In a real-life scenario you want to escape nearly everything which comes from
+the user, so I'm still looking for a better template to run benchmarks on.
+
+= Synopsis
+
+  require 'lib/parkaby'
+  
+  before = self
+  
+  ## inline
+  Parkaby {
+  
+    self == before # => true
+    
+    self << "<!DOCTYPE html>"
+    # or: text "<!DOCTYPE html>"
+    
+    html {
+    
+      head { something }        # tag unless self.respond_to?(:head)
+      tag.head { something }    # force a tag
+      self.head { something }   # force a method call
+      
+      span "<em>Escape!</em>" # => "<span>&lt;em&gt;Escape!&lt;/em&gt;</span>"
+      span { "<em>No escape!</em>" } # => "<span><em>No escape!</em></span>"
+      
+      div {
+        strong "Ruby!"  # You can't mix tags
+        "Silent."       # and return values in blocks
+      } # => "<div><strong>Ruby!</strong></div>"
+      
+      a "something", :href => 'http://google.com'
+      
+      a(:href => 'http://google.com') { "something else" } 
+    }
+    
+  } # => lots of html
+  
+  ## Using Parkaby::Template
+  
+  temp = Parkaby::Template.string('strong self')
+  #    = Parkaby::Template.block { strong self }
+  
+  ctemp = temp.compile(Helpers)
+  ctemp.render("Ruby!") # => "<strong>Ruby!</strong>"
+  
+  temp.def_method(String, :strong)                  
+  "Ruby!".strong # => "<strong>Ruby!</strong>" 
+  
+= More
+
+The easiest way to use Parkaby is simply to pass in a block:
+
+  Parkaby { html { ... } } # => "<html>...</html>"
+
+Let's however take a look at how to use Parkaby::Template:
+
+  temp = Parkaby::Template.string('html { ... }')
+  temp = Parkaby::Template.block { html { ... } }
+  
+After you got a Parkaby::Template, you'll have to compile it to a
+Parkaby::CompiledTemplate. There are two types of a compiled template: One
+that stores the template as a string, and one that stores it as a proc. The
+latter is quite a lot faster the former, but if you're going to evaluate the
+template under a binding, you'll have to use a string.
+
+You also have to give it a helper object when you compile it. This makes sure
+it won't turn methods into HTML-blocks if they exist on the helper object.
+(You can however always prepend the method with "self." to force a method
+call.)
+
+ ctemp = temp.compile_as_string(helper || binding)
+ ctemp = temp.compile_as_proc(helper || binding)
+
+ temp.compile(binding) == temp.compile_as_string(binding)
+ temp.compile(helper)  == temp.compile_as_proc(helper)
+
+After you've compiled it, you just call #render with the object that you want
+to be `self`, or the binding it should be called with. Notice that both
+compile_as_proc and compile_as_string supports both bindings and regular
+objects as arguments (same goes for their #render). They're smart enough to
+convert it the way they want it.
+
+You can also use Template#def_method to define it as a method on an object:
+
+  temp.def_method(String, :cool)
+  "awesome".cool
+  
+  obj = Object.new
+  temp.def_method(obj, :cool)
+  obj.cool
+  
+  # Use :instance_eval to make it a class method on a class
+  temp.def_method(String, :cool, :instance_eval)
+  String.cool
+
+= How
+
+It's quite obvious that Parkaby is fast. How? The secret ingredient is:
+ParseTree! ParseTree turns this:
+
+  html {
+    head {
+      title "happy title"
+    }
+    body {
+      h1 "happy heading"
+      a "a link", "href" => "url"
+    }
+  }
+
+into this:
+
+  s(:iter,
+   s(:call, nil, :html, s(:arglist)),
+   nil,
+   s(:block,
+    s(:iter,
+     s(:call, nil, :head, s(:arglist)),
+     nil,
+     s(:call, nil, :title, s(:arglist, s(:str, "happy title")))),
+    s(:iter,
+     s(:call, nil, :body, s(:arglist)),
+     nil,
+     s(:block,
+      s(:call, nil, :h1, s(:arglist, s(:str, "happy heading"))),
+      s(:call,
+       nil,
+       :a,
+       s(:arglist,
+        s(:str, "a link"),
+        s(:hash, s(:str, "href"), s(:str, "url"))))))))
+
+then Parkaby::Processor turns it into this:
+
+  s(:parkaby,
+   :begin,
+   s(:parkaby,
+    :blocktag, 
+    :html,  
+    s(:block,         
+     s(:parkaby,
+      :blocktag,
+      :head,
+      s(:parkaby, :tag, :title, s(:str, "happy title"), nil),
+      nil),
+     s(:parkaby,
+      :blocktag,
+      :body,
+      s(:block,
+       s(:parkaby, :tag, :h1, s(:str, "happy heading"), nil),
+       s(:parkaby,
+        :tag,
+        :a,
+        s(:str, "a link"),
+        s(:hash, s(:str, "href"), s(:str, "url")))),
+      nil)),
+    nil))
+    
+and Parkaby::Generator turns that into this:
+
+  _parkaby_buffer = [_parkaby_current = []]
+  _parkaby_current << "<html>"
+  _parkaby_buffer << (_parkaby_current = [])
+  _parkaby_value = begin
+  (_parkaby_current << "<head>"
+  _parkaby_buffer << (_parkaby_current = [])
+  _parkaby_value = begin
+  _parkaby_current << "<title>happy title</title>"
+  end
+  _parkaby_current << _parkaby_value if _parkaby_current.empty?
+  _parkaby_current << '</head>'
+  _parkaby_current << "<body>"
+  _parkaby_buffer << (_parkaby_current = [])
+  _parkaby_value = begin
+  (_parkaby_current << "<h1>happy heading</h1>"
+  _parkaby_current << "<a href=\"url\">a link</a>"
+  )
+  end
+  _parkaby_current << _parkaby_value if _parkaby_current.empty?
+  _parkaby_current << '</body>'
+  )
+  end
+  _parkaby_current << _parkaby_value if _parkaby_current.empty?
+  _parkaby_current << '</html>'
+  _parkaby_buffer.join 
+  
+In this specific example you can clearly see that we still have quite a few
+optimizations left until it's perfect, but it's still 23 times faster than
+Markaby's:
+
+  mab {
+    html {
+      head {
+        title "happy title"
+      }
+      body {
+        h1 "happy heading"
+        a "a link", "href" => "url"
+      }
+    }
+  }
+
+= Notes
+
+* Parkaby doesn't change `self` at all.
+* It's smart (maybe too smart):
+  * Parkaby { li "I", "got", "three arguments" }     # => NoMethodError
+  * Parkaby { li({:hash => :fist}, "content after")} # => NoMethodError
+  * Parkaby { self.li }                              # => NoMethodError
+  * Parkaby { li } # => "<li/>"
+  * def li end; Parkaby { li } # => ""
+* Currently, you must give it a Hash-literal for the attributes. [BUG]
+* CssProxy and capture isn't implemented yet.
+* I'm thinking of adding a a follow-feature: when it sees `follow.some_method`
+  it fetches the method definition and inlines it in the main template.
+* Yes, this is very experimental and I don't think anyone is ever going to use 
+  it.
+  
