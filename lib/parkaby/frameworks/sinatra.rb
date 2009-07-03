@@ -1,3 +1,25 @@
+# == Using it
+#
+#   # if you're using Sinatra::Base
+#   Parkaby::Frameworks::Sinatra.activate!
+#   
+#   # if you're using your own class
+#   class MyApp < Sinatra::Base
+#     include Parkaby::Frameworks::Sinatra
+#   end
+#   
+#   # in your code
+#   
+#   get '/' do
+#     parkaby do
+#       h1 'Chunky Bacon'
+#     end
+#   end
+#   
+#   get '/template' do 
+#     # works with inline and external templates
+#     parkaby :template
+#   end
 module Parkaby::Frameworks::Sinatra
   def self.activate!
     ::Sinatra::Base.instance_eval do

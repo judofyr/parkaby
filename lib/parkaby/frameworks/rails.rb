@@ -1,3 +1,8 @@
+# == Using it
+# 
+#   # in config/initializers/parkaby.rb
+#   require 'parkaby'
+#   Parkaby::Frameworks::Rails.active!
 class Parkaby::Frameworks::Rails < ActionView::TemplateHandler
   @@cache = {}
   

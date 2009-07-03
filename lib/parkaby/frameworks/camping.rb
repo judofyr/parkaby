@@ -1,5 +1,14 @@
 Parkaby.load('parse_tree', 'ParseTree')
 
+# == Using it
+#
+#   module Blog
+#     include Parkaby::Frameworks::Camping 
+#     
+#     def self.create
+#       Views.compile!
+#     end
+#   end
 module Parkaby::Frameworks::Camping
   class Processor < SexpProcessor
     def initialize(*a)
