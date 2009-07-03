@@ -4,7 +4,12 @@ module Parkaby
     
     class << self
       def string(str)
-        new(RubyParser.new.parse(str))
+        Parkaby.load 'ruby_parser', 'RubyParser' do
+          def string(str)
+            new(RubyParser.new.parse(str))
+          end
+          string(str)
+        end
       end
       
       def compile_block(&blk)
@@ -12,7 +17,12 @@ module Parkaby
       end
       
       def block(&blk)
-        new(blk.to_sexp[3])
+        Parkaby.load 'parse_tree', 'ParseTree' do
+          def block(&blk)
+            new(Parkaby.proc_to_sexp(blk)[3])
+          end
+          block(&blk)
+        end
       end
     end
     

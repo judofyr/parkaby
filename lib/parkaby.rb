@@ -1,9 +1,5 @@
 $:.unshift File.dirname(__FILE__)
 
-require 'rubygems'
-require 'parse_tree'
-require 'parse_tree_extensions'
-require 'ruby_parser'
 require 'ruby2ruby'
 
 module Parkaby
@@ -18,6 +14,32 @@ module Parkaby
     autoload :Camping, 'parkaby/frameworks/camping'
     autoload :Sinatra, 'parkaby/frameworks/sinatra'
     autoload :Rails,   'parkaby/frameworks/rails'
+  end
+  
+  class MissingDependency < StandardError
+    def initialize(lib)
+      @lib = lib
+    end
+    
+    def to_s
+      "#{@lib} is required. Please put in load path or require it yourself."
+    end
+  end
+  
+  def self.proc_to_sexp(blk)
+    pt = ParseTree.new(false)
+    sexp = pt.parse_tree_for_proc(blk)
+    Unifier.new.process(sexp)
+  end
+  
+  def self.load(lib, klass = nil)
+    begin
+      require lib unless klass && eval("defined?(#{klass})")
+    rescue LoadError
+      raise MissingDependency.new(lib)
+    else
+      yield if block_given?
+    end
   end
   
   ESCAPE_TABLE = {

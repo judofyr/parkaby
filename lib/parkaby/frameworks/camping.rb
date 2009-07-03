@@ -1,3 +1,5 @@
+Parkaby.load('parse_tree', 'ParseTree')
+
 module Parkaby::Frameworks::Camping
   def self.included(mod)
     mod.module_eval %q{

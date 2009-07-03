@@ -26,7 +26,7 @@ module Parkaby
     
     def process(sexp = nil, &blk)
       if blk
-        super(blk.to_sexp[3])   # Just a little helper for development
+        super(Parkaby.proc_to_sexp(blk)[3])   # Just a little helper for development
       else
         super(sexp)
       end
