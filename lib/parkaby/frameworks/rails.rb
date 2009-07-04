@@ -1,8 +1,10 @@
 # == Using it
 # 
-#   # in config/initializers/parkaby.rb
-#   require 'parkaby'
-#   Parkaby::Frameworks::Rails.active!
+#   # in environment.rb (when the gem is released)
+#   config.gem 'parkaby'
+#   
+#   # as a plugin
+#   ./script/plugin install git://github.com/judofyr/parkaby.git
 class Parkaby::Frameworks::Rails < ActionView::TemplateHandler
   @@cache = {}
   

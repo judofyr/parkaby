@@ -1,4 +1,1 @@
-$:.unshift(File.join(File.dirname(__FILE__), 'lib'))
-
-require 'parkaby'
-Parkaby::Frameworks::Rails.activate!
+require File.dirname(__FILE__) + "/rails/init"
