@@ -75,6 +75,14 @@ escapes all input, while in Erubis and Haml you'll need to explicitly mark it
 where needed. In the nasty template, nearly nothing needs to be escaped, so
 Parkaby, Tagz and Markaby are doing a lot of escaping for nothing!
 
+  ~ ~ UPDATE  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+  
+  Nathan Weizenbaum reports in: "You say in the Parkaby docs that in Haml you
+  need to manually mark escaping, but that's not true. Haml supports an
+  option (:escape_html) that makes it default to escaping all input."
+  
+  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
 In a real-life scenario you want to escape nearly everything which comes from
 the user, so I'm still looking for a better template to run benchmarks on.
 
