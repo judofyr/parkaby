@@ -52,6 +52,10 @@ module Parkaby
      end
     
     def to_ruby(helper = nil)
+      Ruby2Ruby.new.process(to_sexp(helper))
+    end
+    
+    def to_sexp(helper = nil)
       if helper.is_a?(Binding) || helper.is_a?(Proc)
         helper = eval("self", helper)
       end
@@ -60,14 +64,10 @@ module Parkaby
       Generator.new.process(sexp)
     end
     
-    def to_a
-      @sexp.to_a
-    end
-    
     private
     
     def sexp
-      Sexp.from_array(to_a)
+      Marshal.load(Marshal.dump(@sexp))
     end
   end
   

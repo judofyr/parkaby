@@ -48,7 +48,8 @@ module Parkaby::Frameworks::Camping
           sexp = Unifier.new.process(sexp)
           sexp = Parkaby::Frameworks::Camping::Processor.new.process(sexp)
           sexp[3] = Parkaby::Processor.new(Views).build(sexp[3])
-          ruby = Parkaby::Generator.new.process(sexp)
+          sexp = Parkaby::Generator.new.process(sexp)
+          ruby = Ruby2Ruby.new.process(sexp)
           CompiledViews.class_eval(ruby)
         end
       end

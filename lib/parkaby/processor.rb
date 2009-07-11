@@ -2,8 +2,10 @@ module Parkaby
   class Processor < SexpProcessor
     # s(:begin,    exp)
     # s(:text,     exp)
-    # s(:tag,      name, content, attr)
-    # s(:blocktag, name, content, attr)
+    # s(:tag,      name, :data)
+    # s(:blocktag, name, :data)
+    # s(:data,     content, attr)
+    # s(:odata,    content_or_attr) # have to check at runtime
     # s(:follow,   call)   # NOT IMPLEMENTED YET
     def initialize(helper = nil)
       super()
@@ -60,47 +62,65 @@ module Parkaby
       end
     end
     
-    def tag_call?(exp)
+    def tag_call?(exp, iter = false)
       # Receiver must be nil
       exp[1].nil? and
       # It can't be defined on the helper
       !helper_respond_to?(exp[2]) and
       # The args must be correct
-      args = tag_args?(exp[3]) and
+      args = tag_args?(exp[3], iter) and
       # It can't look like a text
       !like_text?(exp) and
-      # Returns [method, content, attr]
-      [exp[2], *args]
+      # Returns [method, :data]
+      [exp[2], args]
     end
     
     def tag_iter?(exp)
       # No block args
       exp[2].nil? and
       # The call must look like a call
-      tag = tag_call?(exp[1]) and
-      # It can't have both a block and content
-      !tag[1] and
+      tag = tag_call?(exp[1], true) and
+      # Inject block as content
+      (tag[1][1] = exp[3];
       # Returns [method, block, attr]
-      [tag[0], exp[3], tag[2]]
+      tag)
     end
     
-    def tag_args?(exp)
+    def tag_args?(exp, iter)
+      if iter
+        tag_args_iter?(exp)
+      else
+        tag_args_call?(exp)
+      end
+    end
+    
+    def tag_args_call?(exp)
       case exp.length
       when 1
-        # Empty tag. No content, no attr
-        return []
+        # Empty tag
+        s(:data, nil, nil)
       when 2
-        if exp[1][0] == :hash
-          # Only attr.
-          return [nil, exp[1]]
+        case exp[1].sexp_type
+        when :hash
+          s(:data, nil, exp[1])
+        when :str, :lit
+          s(:data, exp[1], nil)
         else
-          # Something else = content.
-          return [exp[1], nil]
+          # Could be both a content or attr
+          s(:odata, exp[1])
         end
       when 3
-        # If 2nd isn't a Hash, it's wrong.
-        return false unless exp[2][0] == :hash
-        return exp[1..2]
+        s(:data, exp[1], exp[2])
+      end
+    end
+    
+    def tag_args_iter?(exp)
+      case exp.length
+      when 1
+        s(:data, nil, nil)
+      when 2
+        # Content is given as block, must be attr
+        s(:data, nil, exp[1])
       end
     end
     
@@ -108,8 +128,8 @@ module Parkaby
       # receiver must be "tag"
       exp[1] == s(:call, nil, :tag, s(:arglist)) and
       # args must be correct
-      args = tag_args?(exp[3]) and
-      [exp[2], *args]
+      args = tag_args_call?(exp[3]) and
+      [exp[2], args]
     end
     
     def force_tag_iter?(exp)
