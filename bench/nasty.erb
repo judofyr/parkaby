@@ -40,10 +40,8 @@
       <% ('a'..'f').each do |a|%>
         <li><%= a %></li>
       <% end %>
+    </ul>
     <div class="of_divs_with_underscore" id="combo"><%= @should_eval = "with this text" %></div>
-    <%= "foo".each_line do |line|
-      nil
-    end %>
     <div class="footer">
       <div><%== "See, and this contains a tag: <strong>escape me!</strong>" %></div>
       <strong class="shout">

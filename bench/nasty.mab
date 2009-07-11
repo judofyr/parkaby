@@ -1,4 +1,4 @@
-self << '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+text '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
 html(:xmlns=>'http://www.w3.org/1999/xhtml', 'xml:lang'=>'en-US') do
   head do
     title "Hampton Catlin Is Totally Awesome"
@@ -7,23 +7,23 @@ html(:xmlns=>'http://www.w3.org/1999/xhtml', 'xml:lang'=>'en-US') do
   body do
     # You're In my house now!
     div :class => "header" do
-      self << %|Yes, ladies and gentileman. He is just that egotistical.
+      text %|Yes, ladies and gentileman. He is just that egotistical.
       Fantastic! This should be multi-line output
       The question is if this would translate! Ahah!|
-      self << 1 + 9 + 8 + 2 #numbers should work and this should be ignored
+      text 1 + 9 + 8 + 2 #numbers should work and this should be ignored
     end
-    div(:id => "body") { self << "Quotes should be loved! Just like people!" }
+    div(:id => "body") { text "Quotes should be loved! Just like people!" }
     120.times do |number|
       a(number, :href => "#id-#{number}")
     end
-    self << "Wow.|"
+    text "Wow.|"
     p do
-      self << "Holy cow        " + 
+      text "Holy cow        " + 
         "multiline       " +       
         "tags!           " + 
         "A pipe (|) even!"   
-      self << [1, 2, 3].collect { |n| "PipesIgnored|" }
-      self << [1, 2, 3].collect { |n|     
+      text [1, 2, 3].collect { |n| "PipesIgnored|" }
+      text [1, 2, 3].collect { |n|     
           n.to_s                    
         }.join("|")                
     end
@@ -32,7 +32,7 @@ html(:xmlns=>'http://www.w3.org/1999/xhtml', 'xml:lang'=>'en-US') do
       foo << "this"
       foo << " shouldn't"
       foo << " evaluate"
-      self << foo + " but now it should!\n"
+      text foo + " but now it should!\n"
       # Woah crap a comment!
     end
     # That was a line that shouldn't close everything.
