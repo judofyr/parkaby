@@ -12,13 +12,16 @@ shared 'basic' do
       should == "<h1>Awesome</h1><strong>Ruby</strong>"
     P { br }.should == "<br/>"
     P { br; hr}.should == "<br/><hr/>"
+    P { br :style => "test" }.should == '<br style="test"/>'
     P { a "Google", :href => "http://google.com" }.
       should =='<a href="http://google.com">Google</a>'
   end
-
+  
   it "should handle nested tags" do
     P { html { head { h1 "Awesome" }; body { "Cool" } } }.
       should == "<html><head><h1>Awesome</h1></head><body>Cool</body></html>"
+    P { html(:id => 'head') { body } }.
+      should == '<html id="head"><body/></html>'
   end
 
   it "should handle mixed syntax" do
