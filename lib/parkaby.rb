@@ -2,6 +2,7 @@ $:.unshift File.dirname(__FILE__)
 
 require 'ruby2ruby'
 require 'sexp_template'
+require 'sexp_builder'
 
 module Parkaby
   autoload :Processor,         'parkaby/processor'

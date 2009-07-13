@@ -1,5 +1,5 @@
 module Parkaby
-  class Processor < SexpProcessor
+  class Processor < SexpBuilder
     # s(:begin,    exp)
     # s(:text,     exp)
     # s(:tag,      name, :data)
@@ -18,86 +18,72 @@ module Parkaby
       else
         helper
       end
-
-      self.require_empty = false
     end
     
     def build(sexp = nil, &blk)
       s(:parkaby, :begin, process(sexp, &blk))
     end
     
-    def process(sexp = nil, &blk)
-      if blk
-        super(Parkaby.proc_to_sexp(blk)[3])   # Just a little helper for development
-      else
-        super(sexp)
-      end
+    def helper_respond_to?(meth)
+      @helper.respond_to?(meth)
     end
     
-    def process_call(exp)
-      # exp[1] => reciever.
-      # exp[2] => method
-      # exp[3] => (args)
-      exp[3] = process(exp[3])
-      if text?(exp)
-        s(:parkaby, :text, exp[3])
-      elsif tag = force_tag_call?(exp) || tag_call?(exp)
-        s(:parkaby, :tag, *tag)
-      elsif follow = follow_call?(exp)
-        s(:parkaby, :follow, exp)
-      else
-        exp
-      end
-    end
+    ## Matchers
     
-    def process_iter(exp)
-      # exp[1] => process_call
-      # exp[2] => |args|
-      # exp[3] => {blk}
-      exp[3] = process(exp[3])
-      if tag = force_tag_iter?(exp) || tag_iter?(exp)
-        s(:parkaby, :blocktag, *tag)
-      else
-        exp
-      end
+    matcher :name do |name|
+      !helper_respond_to?(name)
     end
-    
-    def tag_call?(exp, iter = false)
-      # Receiver must be nil
-      exp[1].nil? and
-      # It can't be defined on the helper
-      !helper_respond_to?(exp[2]) and
-      # The args must be correct
-      args = tag_args?(exp[3], iter) and
-      # It can't look like a text
-      !like_text?(exp) and
-      # Returns [method, :data]
-      [exp[2], args]
+
+    matcher :args_call do |exp|
+      exp.length < 4
     end
-    
-    def tag_iter?(exp)
-      # No block args
-      exp[2].nil? and
-      # The call must look like a call
-      tag = tag_call?(exp[1], true) and
-      # Inject block as content
-      (tag[1][1] = exp[3];
-      # Returns [method, block, attr]
-      tag)
+
+    matcher :args_iter do |exp|
+      exp.length < 3
     end
-    
-    def tag_args?(exp, iter)
-      if iter
-        tag_args_iter?(exp)
-      else
-        tag_args_call?(exp)
-      end
+
+    ## Rules
+
+    rule :tag_call_builder do |iter|
+      # If iter is true, use the args_iter-mather,
+      # If not,          use the args_call-matcher
+      args = iter ? args_iter : args_call
+
+      # Forced tag call
+      s(:call,
+       s(:call, nil, :tag, s(:arglist)),
+       wild % :name,
+       args % :args) |  # <- args-matcher
+
+      # or regular tag call
+      s(:call,
+       nil,
+       name % :name,
+       args % :args)    # <- args-matcher
     end
+
+    rule :tag_call do
+      tag_call_builder(false)
+    end
+
+    rule :tag_iter do
+      s(:iter,
+       tag_call_builder(true),  # <- pass true so we use the args_iter matcher
+       nil,
+       wild % :content)
+    end
+
+    rule :text do
+      s(:call, nil,      :text, s(:arglist, wild % :content)) |
+      s(:call, s(:self), :<<,   s(:arglist, wild % :content))
+    end
+
+    ## Rewriters
     
-    def tag_args_call?(exp)
+    rewrite :in => :args_call do |data|
+      exp = data.sexp
       case exp.length
       when 1
-        # Empty tag
         s(:data, nil, nil)
       when 2
         case exp[1].sexp_type
@@ -113,8 +99,9 @@ module Parkaby
         s(:data, exp[1], exp[2])
       end
     end
-    
-    def tag_args_iter?(exp)
+
+    rewrite :in => :args_iter do |data|
+      exp = data.sexp
       case exp.length
       when 1
         s(:data, nil, nil)
@@ -122,41 +109,24 @@ module Parkaby
         # Content is given as block, must be attr
         s(:data, nil, exp[1])
       end
+    end    
+
+    rewrite :tag_call do |data|
+      # Process args in the args-context
+      s(:parkaby, :tag, data[:name], process_args_call(data[:args]))
     end
-    
-    def force_tag_call?(exp)
-      # receiver must be "tag"
-      exp[1] == s(:call, nil, :tag, s(:arglist)) and
-      # args must be correct
-      args = tag_args_call?(exp[3]) and
-      [exp[2], args]
+
+    rewrite :tag_iter do |data|
+      # Process args in the args-context
+      args = process_args_iter(data[:args])
+      # Inject the content into the data-node:
+      args[1] = process(data[:content])
+      s(:parkaby, :blocktag, data[:name], args)
     end
-    
-    def force_tag_iter?(exp)
-      # The call must look like a forced tag!
-      tag = force_tag_call?(exp[1]) and
-      # Returns [method, block, attr]
-      [tag[0], exp[3], tag[2]]
-    end
-    
-    
-    def follow_call?(exp)
-      #exp[1] == s(:call, nil, :follow, s(:arglist))
-      false
-    end
-    
-    def like_text?(exp)
-      rec_meth = exp[1..2].to_a
-      rec_meth == [[:self], :<<] || rec_meth == [nil, :text]
-    end
-    
-    def text?(exp)
-      like_text?(exp) and
-      exp[3].length == 2
-    end
-    
-    def helper_respond_to?(meth)
-      @helper.respond_to?(meth)
+
+    rewrite :text do |data|
+      # In this specific case we don't need to process the arglist.
+      s(:parkaby, :text, data[:content])
     end
   end
 end
