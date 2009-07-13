@@ -7,6 +7,7 @@ require 'rubygems'
 require 'markaby'
 require 'parkaby'
 require 'erubis'
+require 'erb'
 require 'tagz'
 require 'haml'
 require 'erector'
@@ -17,7 +18,9 @@ include Erector::Mixin
 
 def define_erb(content)
   Erubis::Eruby.new(content).def_method(@obj, :erubis)
-  [['Erubis', '@obj.erubis']]
+  @obj.extend(ERB.new(content).def_module)
+  [['Erubis', '@obj.erubis'],
+   ['ERB', '@obj.erb']]
 end
 
 def define_mab(content)
