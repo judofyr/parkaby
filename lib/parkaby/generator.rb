@@ -67,7 +67,7 @@ module Parkaby
     end
 
     def parkaby_text(exp)
-      render :text, :content => process(exp.shift)
+      render :text, :content => exp.shift
     end
     
     def parkaby_blocktag(exp)
