@@ -50,5 +50,12 @@ shared 'basic' do
     P { tag.li }.should == '<li/>'
 
     meta_eval { remove_method(:li) }
+  end
+  
+  it "should handle CSS proxies" do
+    P { div.footer!("content") }.
+      should == '<div id="footer">content</div>'
+    P { div.foo.bar.foobar }.
+      should == '<div class="foo bar foobar"/>'
   end   
 end
