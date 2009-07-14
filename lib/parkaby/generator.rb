@@ -9,15 +9,15 @@ module Parkaby
     end
     
     template :tag do
-      _parkaby_current << "<#{name!}#{attr!}>#{content!}</#{name!}>"
+      _parkaby_current << "<#{name!}#{default!}#{attr!}>#{content!}</#{name!}>"
     end
     
     template :empty_tag do
-      _parkaby_current << "<#{name!}#{attr!}/>"
+      _parkaby_current << "<#{name!}#{default!}#{attr!}/>"
     end
     
     template :blocktag do
-      _parkaby_current << "<#{name!}#{attr!}>"
+      _parkaby_current << "<#{name!}#{default!}#{attr!}>"
 
       _parkaby_buffer << (_parkaby_current = [])
       _parkaby_value = content!
@@ -30,9 +30,14 @@ module Parkaby
       _parkaby_temp = content!
       
       if _parkaby_temp.is_a?(Hash)
-        empty_tag(:name => name!, :attr => attributes(:content => _parkaby_temp))
+        empty_tag(:name => name!,
+                  :attr => attributes(:content => _parkaby_temp),
+                  :default => default!)
       else
-        tag(:name => name!, :attr => nil, :content => _parkaby_temp)
+        tag(:name => name!,
+            :attr => nil,
+            :content => _parkaby_temp,
+            :default => default!)
       end
     end
     
@@ -73,6 +78,7 @@ module Parkaby
     def parkaby_blocktag(exp)
       name = exp.shift
       data = exp.shift
+      default = build_default(exp.shift)
       
       type = data.shift
       content = process(data.shift)
@@ -81,12 +87,14 @@ module Parkaby
       render :blocktag,
         :name    => name,
         :attr    => attr,
-        :content => content
+        :content => content,
+        :default => default
     end
     
     def parkaby_tag(exp)
       name = exp.shift
       data = exp.shift
+      default = build_default(exp.shift)
       
       type = data.shift
       
@@ -99,13 +107,15 @@ module Parkaby
         render template,
           :name => name, 
           :attr => attr,
-          :content => content
+          :content => content,
+          :default => default
       when :odata
         content = data.shift
         
         render :otag,
           :name => name,
-          :content => content
+          :content => content,
+          :default => default
       end
     end
     
@@ -164,6 +174,19 @@ module Parkaby
       else
         render :escape, :content => exp
       end
+    end
+    
+    def build_default(exp)
+      type = exp.shift
+      id = exp.shift
+      classes = exp.shift
+      
+      str = ""
+      
+      str << " id=\"#{id.to_s.chomp("!")}\"" if id
+      str << " class=\"#{classes.join(' ')}\"" unless classes.empty?
+      
+      str unless str.empty?
     end
     
     def teval(*args)

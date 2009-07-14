@@ -89,7 +89,7 @@ module Parkaby
       s(:call,
         empty_class_proxy,
         id | class_name,
-        args % :args)
+        args % :css_args)
     end
 
     rule :tag_call do
@@ -117,7 +117,7 @@ module Parkaby
       # Find classes and ids
       default = s(:default, data[:id], Array(data[:class]))
       # Process args using custom method
-      args = process_args_call(data[:args])
+      args = process_args_call(data[:css_args] || data[:args])
       s(:parkaby, :tag, data[:name], args, default)
     end
 
@@ -125,7 +125,7 @@ module Parkaby
       # Find classes and ids
       default = s(:default, data[:id], Array(data[:class]))
       # Process args using custom method
-      args = process_args_iter(data[:args])
+      args = process_args_iter(data[:css_args] || data[:args])
       # Inject the content into the data-node:
       args[1] = process(data[:content])
       s(:parkaby, :blocktag, data[:name], args, default)
