@@ -2,10 +2,11 @@ module Parkaby
   class Processor < SexpBuilder
     # s(:begin,    exp)
     # s(:text,     exp)
-    # s(:tag,      name, :data)
-    # s(:blocktag, name, :data)
+    # s(:tag,      name, :data, :default)
+    # s(:blocktag, name, :data, :default)
     # s(:data,     content, attr)
     # s(:odata,    content_or_attr) # have to check at runtime
+    # s(:default,  id, classes)
     # s(:follow,   call)   # NOT IMPLEMENTED YET
     def initialize(helper = nil)
       super()
@@ -92,11 +93,13 @@ module Parkaby
     end
 
     rule :tag_call do
-      tag_call_builder(args_call) |
-      css_proxy(args_call)
+      n(scope(:call)) &
+      (tag_call_builder(args_call) |
+       css_proxy(args_call))
     end
 
     rule :tag_iter do
+      n(scope(:call)) &
       s(:iter,
        tag_call_builder(args_iter) | css_proxy(args_iter),
        nil,
@@ -111,16 +114,21 @@ module Parkaby
     ## Rewriters   
 
     rewrite :tag_call do |data|
-      # Process args in the args-context
-      s(:parkaby, :tag, data[:name], process_args_call(data[:args]))
+      # Find classes and ids
+      default = s(:default, data[:id], Array(data[:class]))
+      # Process args using custom method
+      args = process_args_call(data[:args])
+      s(:parkaby, :tag, data[:name], args, default)
     end
 
     rewrite :tag_iter do |data|
-      # Process args in the args-context
+      # Find classes and ids
+      default = s(:default, data[:id], Array(data[:class]))
+      # Process args using custom method
       args = process_args_iter(data[:args])
       # Inject the content into the data-node:
       args[1] = process(data[:content])
-      s(:parkaby, :blocktag, data[:name], args)
+      s(:parkaby, :blocktag, data[:name], args, default)
     end
 
     rewrite :text do |data|
