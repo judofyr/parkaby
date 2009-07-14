@@ -1,7 +1,13 @@
+ALL = FileList['spec/*_spec.rb']
+BASIC = ALL.grep(/basic|inline/)
+
 task :spec do
-  Dir["spec/*_spec.rb"].each do |spec|
-    load spec
-  end
+  BASIC.each { |file| load file }
+  Bacon.summary_on_exit
+end
+
+task :all do
+  ALL.each { |file| load file }
   Bacon.summary_on_exit
 end
 
