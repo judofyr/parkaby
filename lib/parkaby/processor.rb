@@ -43,12 +43,9 @@ module Parkaby
     end
 
     ## Rules
-
-    rule :tag_call_builder do |iter|
-      # If iter is true, use the args_iter-mather,
-      # If not,          use the args_call-matcher
-      args = iter ? args_iter : args_call
-
+    
+    # Builds the basic tag_call, which allows variations in the arglist
+    rule :tag_call_builder do |args|
       # Forced tag call
       s(:call,
        s(:call, nil, :tag, s(:arglist)),
@@ -61,14 +58,47 @@ module Parkaby
        name % :name,
        args % :args)    # <- args-matcher
     end
+    
+
+    # Matches a tag_call with no arguments.  Used in CSS Proxy.
+    rule :empty_tag_call do
+      tag_call_builder(s(:arglist))
+    end
+    
+    rule :class_name do
+      m(/[^!]$/) % :class
+    end
+    
+    rule :id do
+      m(/!$/) % :id
+    end
+    
+    # Recursively matches tag.klass.klass.klass
+    rule :empty_class_proxy do
+      empty_tag_call |
+      s(:call,
+        empty_class_proxy,
+        class_name,
+        s(:arglist))
+    end
+    
+    # Matches empty_class_proxy.id!(args)
+    #     and empty_class_proxy.klass(args)
+    rule :css_proxy do |args|
+      s(:call,
+        empty_class_proxy,
+        id | class_name,
+        args % :args)
+    end
 
     rule :tag_call do
-      tag_call_builder(false)
+      tag_call_builder(args_call) |
+      css_proxy(args_call)
     end
 
     rule :tag_iter do
       s(:iter,
-       tag_call_builder(true),  # <- pass true so we use the args_iter matcher
+       tag_call_builder(args_iter) | css_proxy(args_iter),
        nil,
        wild % :content)
     end
@@ -78,10 +108,27 @@ module Parkaby
       s(:call, s(:self), :<<,   s(:arglist, wild % :content))
     end
 
-    ## Rewriters
+    ## Rewriters   
+
+    rewrite :tag_call do |data|
+      # Process args in the args-context
+      s(:parkaby, :tag, data[:name], process_args_call(data[:args]))
+    end
+
+    rewrite :tag_iter do |data|
+      # Process args in the args-context
+      args = process_args_iter(data[:args])
+      # Inject the content into the data-node:
+      args[1] = process(data[:content])
+      s(:parkaby, :blocktag, data[:name], args)
+    end
+
+    rewrite :text do |data|
+      # In this specific case we don't need to process the arglist.
+      s(:parkaby, :text, data[:content])
+    end
     
-    rewrite :in => :args_call do |data|
-      exp = data.sexp
+    def process_args_call(exp)
       case exp.length
       when 1
         s(:data, nil, nil)
@@ -100,8 +147,7 @@ module Parkaby
       end
     end
 
-    rewrite :in => :args_iter do |data|
-      exp = data.sexp
+    def process_args_iter(exp)
       case exp.length
       when 1
         s(:data, nil, nil)
@@ -109,24 +155,6 @@ module Parkaby
         # Content is given as block, must be attr
         s(:data, nil, exp[1])
       end
-    end    
-
-    rewrite :tag_call do |data|
-      # Process args in the args-context
-      s(:parkaby, :tag, data[:name], process_args_call(data[:args]))
-    end
-
-    rewrite :tag_iter do |data|
-      # Process args in the args-context
-      args = process_args_iter(data[:args])
-      # Inject the content into the data-node:
-      args[1] = process(data[:content])
-      s(:parkaby, :blocktag, data[:name], args)
-    end
-
-    rewrite :text do |data|
-      # In this specific case we don't need to process the arglist.
-      s(:parkaby, :text, data[:content])
     end
   end
 end
