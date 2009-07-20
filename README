@@ -1,3 +1,20 @@
+  
+  ~ ~ NOTE~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+  I'm just pushing the latest changes out before I'll go on
+  holiday, so at the moment it's not working 100% correctly.
+  
+  If you still want to play around you could:
+    1) git checkout 0797b2a253e40103c8132374996c1dc9ed5aa4aa (old version)
+    2) clone SexpTemplate and SexpBuilder (see github.com/judofyr) and
+       put them in the load path at the top of lib/parkaby.rb
+       
+  I'll release it as a gem when I'll get back home.
+  
+  //Magnus Holm
+  
+  ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
 = Parkaby, ParseTree meets Markaby
 
     In the beginning God created ERB. And ERB was waste and void;
