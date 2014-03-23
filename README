@@ -42,7 +42,7 @@ That's where Markaby comes in:
   }
   
 Of course, we all know that Ruby is slow. Needless to say, that makes Markaby
-slow too. Not even Tagz, Ryan Davis' fast Markaby-clone, can't stand a chance
+slow too. Not even Tagz, Ara T Howard's fast Markaby-clone, can't stand a chance
 against Erubis and Haml. It's time we fight back. Let's show them that pure,
 readable Ruby can get on par with percent signs and forced indentations:
 
